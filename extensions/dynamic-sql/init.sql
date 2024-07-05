@@ -28,9 +28,9 @@ $$
 LANGUAGE plpgsql;
 
 -- sql
-CREATE OR REPLACE FUNCTION update_dynamic_sql (sql_string_request text)
+CREATE OR REPLACE FUNCTION execute_sql_statement (sql_string_request text)
   RETURNS jsonb
-AS $body$
+AS $pgsql$
   DECLARE
   json_ret jsonb;
   rec record;
@@ -58,15 +58,46 @@ BEGIN
           RAISE NOTICE 'Trying to evaluate a single statement that should not return anything...';
           GET DIAGNOSTICS stmt_row_count = ROW_COUNT;
           EXECUTE sql_string_request;
-          RETURN format('% rows processed by the command %', stmt_row_count, sql_string_request)::jsonb;
+          RETURN format($ret_message$"%s rows processed by the command '%s'"$ret_message$, stmt_row_count, sql_string_request)::jsonb;
       END;
   END;
 END;
-$body$
-  LANGUAGE plpgsql;
+$pgsql$ LANGUAGE plpgsql;
 
-
-
+CREATE OR REPLACE FUNCTION execute_sql_statement_set (statements setof omni_sql.raw_statement[])
+  RETURNS jsonb
+  AS $pgsql$
+DECLARE
+  return_json jsonb;
+  stmt omni_sql.raw_statement;
+BEGIN
+  return_json := '[]'::jsonb;
+  FOREACH stmt IN ARRAY statements LOOP
+    DECLARE stmt_json jsonb;
+    BEGIN
+      return_json := execute_sql_statement (stmt);
+    END;
+  END LOOP;
+  RETURN return_json;
+END;
+$pgsql$
+LANGUAGE plpgsql;
 
 update omni_httpd.handlers
    set query = $$select omni_httpd.http_response(update_dynamic_sql(convert_from(request.body, 'UTF8'))) from request where request.method = 'POST'$$
+
+-- tests
+-- https://stackoverflow.com/a/43979964
+SELECT  execute_sql_statement_set(array_agg(raw_statements)) from omni_sql.raw_statements (
+                   $stmt_set$
+ DROP SCHEMA IF EXISTS dyn_sql CASCADE;
+
+CREATE SCHEMA IF NOT EXISTS dyn_sql;
+
+CREATE TABLE IF NOT EXISTS dyn_sql.test_table (
+  id int PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  posted_at timestamp DEFAULT now()
+);
+
+INSERT INTO dyn_sql.test_table DEFAULT VALUES;
+$stmt_set$);

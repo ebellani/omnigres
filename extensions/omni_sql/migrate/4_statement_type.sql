@@ -1,9 +1,9 @@
 create type statement_type as enum (
-    'MultiStmt', -- special type for multiple statements
+  'MultiStmt', -- special type for multiple statements
     'InsertStmt', 'DeleteStmt', 'UpdateStmt', 'MergeStmt', 'SelectStmt', 'SetOperationStmt', 'ReturnStmt',
     'PLAssignStmt', 'CreateSchemaStmt', 'AlterTableStmt', 'ReplicaIdentityStmt', 'AlterCollationStmt', 'AlterDomainStmt',
     'GrantStmt', 'GrantRoleStmt', 'AlterDefaultPrivilegesStmt', 'CopyStmt', 'VariableSetStmt', 'VariableShowStmt',
-    'CreateStmt', 'CreateTableSpaceStmt', 'DropTableSpaceStmt', 'AlterTableSpaceOptionsStmt', 'AlterTableMoveAllStmt',
+    'CreateStmt', 'CreateTableoSpaceStmt', 'DropTableSpaceStmt', 'AlterTableSpaceOptionsStmt', 'AlterTableMoveAllStmt',
     'CreateExtensionStmt', 'AlterExtensionStmt', 'AlterExtensionContentsStmt', 'CreateFdwStmt', 'AlterFdwStmt',
     'CreateForeignServerStmt', 'AlterForeignServerStmt', 'CreateForeignTableStmt', 'CreateUserMappingStmt',
     'AlterUserMappingStmt', 'DropUserMappingStmt', 'ImportForeignSchemaStmt', 'CreatePolicyStmt', 'AlterPolicyStmt',

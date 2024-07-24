@@ -13,6 +13,7 @@
 
 #include "executor/spi.h"
 #include "utils/jsonb.h"
+/* #include "utils/jsonfuncs.h" */
 
 PG_MODULE_MAGIC;
 
@@ -583,7 +584,8 @@ Datum execq(PG_FUNCTION_ARGS)
   ret = SPI_exec(command, cnt);
 
   proc = SPI_processed;
-  Jsonb *jb;
+  /* Jsonb *jb; */
+
   /*
    * If some rows were fetched, print them via elog(INFO).
    * Try to transform them into json before printing.
@@ -592,13 +594,28 @@ Datum execq(PG_FUNCTION_ARGS)
     {
       SPITupleTable *tuptable = SPI_tuptable;
       TupleDesc tupdesc = tuptable->tupdesc;
+
       int natts =  tupdesc->natts;
       uint64 cardinality;
       /* loop for each tuple */
       uint64 j;
+
+      /* heap_copy_tuple_as_datum */
+      /* DatumGetHeapTupleHeader */
+      /* DatumGetJsonbP */
+      /* SPI_gettypeid -> jason categorize_type ->  */
       for (j = 0; j < tuptable->numvals; j++)
         {
           HeapTuple tuple = tuptable->vals[j];
+          Datum tuple_datum = heap_copy_tuple_as_datum(tuple, tupdesc);
+          JsonbValue jsonb_value;
+          JsonbToJsonbValue(DatumGetJsonbP(DirectFunctionCall1(to_jsonb, tuple_datum)),
+                            &jsonb_value);
+
+          /* copy jsonb_build_array_worker */
+
+          /* datum_to_jsonb */
+          /* ^ row  */
           int i;
           /* loop for each attribute */
           for (i = 1; i <= tupdesc->natts; i++) {

@@ -599,18 +599,21 @@ Datum execq(PG_FUNCTION_ARGS)
       uint64 cardinality;
       /* loop for each tuple */
       uint64 j;
-
-      /* heap_copy_tuple_as_datum */
-      /* DatumGetHeapTupleHeader */
-      /* DatumGetJsonbP */
-      /* SPI_gettypeid -> jason categorize_type ->  */
+      /* this will be the returned array */
+      JsonbInState result;
+      /* prepare memory area */
+      memset(&result, 0, sizeof(JsonbInState));
+      /* push initial token marking the start of the array */
+      result.res = pushJsonbValue(&result.parseState, WJB_BEGIN_ARRAY, NULL);
+      /* iterate over tuples */
       for (j = 0; j < tuptable->numvals; j++)
         {
           HeapTuple tuple = tuptable->vals[j];
           Datum tuple_datum = heap_copy_tuple_as_datum(tuple, tupdesc);
           JsonbValue jsonb_value;
-          JsonbToJsonbValue(DatumGetJsonbP(DirectFunctionCall1(to_jsonb, tuple_datum)),
-                            &jsonb_value);
+
+          /* JsonbToJsonbValue(DatumGetJsonbP(DirectFunctionCall1(to_jsonb, tuple_datum)), */
+          /*                   &jsonb_value); */
 
           /* copy jsonb_build_array_worker */
 
@@ -627,6 +630,8 @@ Datum execq(PG_FUNCTION_ARGS)
           }
           elog(INFO, "\n");
         }
+      /* push last token indicating end of array */
+      result.res = pushJsonbValue(&result.parseState, WJB_END_ARRAY, NULL);
     }
 
   SPI_finish();
